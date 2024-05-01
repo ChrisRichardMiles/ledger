@@ -1,0 +1,19 @@
+{
+    "name": "my-nextjs-app",
+    "version": "1.0.0",
+    "description": "General Ledger System frontend with Next.js",
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start"
+    },
+    "dependencies": {
+      "next": "^12.0.0",
+      "react": "^17.0.0",
+      "react-dom": "^17.0.0"
+    },
+    "devDependencies": {
+      
+    }
+  }
+  
