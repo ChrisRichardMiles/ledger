@@ -4,7 +4,7 @@ FROM node:14
 WORKDIR /app
 
 # Copy frontend code
-COPY frontend/ .
+COPY / .
 
 # Install dependencies
 RUN npm install
