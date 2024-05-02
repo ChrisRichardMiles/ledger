@@ -2,22 +2,23 @@
 FROM postgres:latest
 
 # Set environment variable for superuser password
-ENV POSTGRES_PASSWORD=password
+# ENV POSTGRES_PASSWORD=password
 
 # Copy initialization script to create database and table
-COPY init-db.sql /docker-entrypoint-initdb.d/
+# COPY init-db.sql /docker-entrypoint-initdb.d/
+# COPY query-db.sql /docker-entrypoint-initdb.d/
 
 # Expose PostgreSQL port (optional, but useful for external access)
-EXPOSE 5432
+# EXPOSE 5432
 
 # Set environment variable to log all SQL statements
-ENV PGLOG log_statement=all
+# ENV PGLOG log_statement=all
 
-# Copy script to query database
-COPY query-db.sh /usr/local/bin/
+# # Copy modified configuration files
+COPY postgresql.conf /etc/postgresql/postgresql.conf
+COPY pg_hba.conf /etc/postgresql/pg_hba.conf
 
-# Grant execute permissions to the script
-RUN chmod +x /usr/local/bin/query-db.sh
+# Run command to start PostgreSQL with custom configuration
+CMD ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+# CMD ["postgres"]
 
-# Command to start PostgreSQL and run the query script
-CMD ["postgres"]

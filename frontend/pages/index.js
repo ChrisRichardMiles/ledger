@@ -1,4 +1,5 @@
 import React from 'react';
+import GetEntries from '../components/GetEntries';
 
 const IndexPage = () => {
   return (
@@ -34,8 +35,9 @@ const IndexPage = () => {
       </form>
 
       {/* Get All Entries Button */}
-      <button>Get All Entries</button>
-
+     
+      <button>Get All Entries - old</button>
+      <GetEntries />
       {/* Get Entry By Entry ID Form */}
       <form>
         <h2>Get Entry By Entry ID</h2>
