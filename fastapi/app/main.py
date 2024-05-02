@@ -1,10 +1,46 @@
-from fastapi import FastAPI, HTTPException, Query
-from sqlalchemy import create_engine, MetaData, Table, select, text
+from fastapi import FastAPI, HTTPException, Request, Query
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from sqlalchemy import create_engine, text
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import Column, Integer, String
+from starlette.middleware.base import BaseHTTPMiddleware
+from pydantic import BaseModel
+import json
+
+class LedgerEntry(BaseModel):
+    date: str
+    account: str
+    debit: float = None
+    credit: float = None
+    description: str = None
 
 # Create an instance of the FastAPI class
 app = FastAPI()
+
+# Added for Debugging but it didn't show anything
+# @app.exception_handler(RequestValidationError)
+# async def validation_exception_handler(request: Request, exc: RequestValidationError):
+#     errors = exc.errors()
+#     body = await request.json()  # Be cautious with this line; if request body is large, this could be inefficient
+#     return JSONResponse(
+#         status_code=422,
+#         content={
+#             "detail": errors,
+#             "body": body
+#         }
+#     )
+
+# Middleware to log the request body
+class RequestBodyLoggerMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.method == "POST" and request.url.path == "/entries":
+            body = await request.json()
+            print("Incoming POST request data:", json.dumps(body, indent=4))
+        response = await call_next(request)
+        return response
+
+# Add the custom middleware
+app.add_middleware(RequestBodyLoggerMiddleware)
 
 # Enable CORS
 app.add_middleware(
@@ -21,19 +57,6 @@ DATABASE_URL = 'sqlite:///ledger.db'
 # Create the database engine
 engine = create_engine(DATABASE_URL)
 
-# Define metadata
-# metadata = MetaData()
-
-# Define the table
-# ledger = Table(
-#     'ledger', 
-#     metadata, 
-#     Column('id', Integer),
-#     Column('description', String),
-#     Column('amount', Integer)
-# )
-
-# metadata.create_all(engine)
 
 # Define the route to handle the root endpoint
 @app.get("/")
@@ -82,41 +105,6 @@ async def get_entry_by_id(entry_id: int):
     # Return the JSON response containing the entry
     return serialized_entry
 
-# @app.get("/summary")
-# async def get_ledger_summary():
-#     print('get_ledger_summary')
-#     with engine.connect() as connection:
-#         # Query to calculate the total number of debits and their total amount
-#         debit_query = text("""
-#             SELECT COUNT(*) as total_debits, SUM(debit) as total_debit_amount
-#             FROM ledger
-#             WHERE debit > 0
-#         """)
-#         debit_result = connection.execute(debit_query).fetchone()
-
-#         # Query to calculate the total number of credits and their total amount
-#         credit_query = text("""
-#             SELECT COUNT(*) as total_credits, SUM(credit) as total_credit_amount
-#             FROM ledger
-#             WHERE credit > 0  
-#         """)
-#         credit_result = connection.execute(credit_query).fetchone()
-#         print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
-#         print(credit_result, print(type(credit_result)))
-
-#         # Determine if the ledger is balanced (total debits equal total credits)
-#         is_balanced = (debit_result['total_debits'] == credit_result['total_credits'])
-
-#         # Compile the results into a single dictionary to return as JSON
-#         summary = {
-#             "total_number_of_debits": debit_result['total_debits'],
-#             "total_debit_amount": abs(debit_result['total_debit_amount'] if debit_result['total_debit_amount'] else 0),
-#             "total_number_of_credits": credit_result['total_credits'],
-#             "total_credit_amount": credit_result['total_credit_amount'] if credit_result['total_credit_amount'] else 0,
-#             "is_balanced": is_balanced
-#         }
-
-#         return summary
 
 @app.get("/summary")
 async def get_ledger_summary():
@@ -153,3 +141,30 @@ async def get_ledger_summary():
         }
 
         return summary
+    
+@app.post("/entries")
+async def post_entry(entry: LedgerEntry):
+    query = text("""
+        INSERT INTO ledger (date, account, debit, credit, description)
+        VALUES (:date, :account, :debit, :credit, :description)
+    """)
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(query, entry.dict())
+            connection.commit()  # Make sure to commit if not using autocommit
+            return {"message": "Entry added successfully", "id": result.lastrowid}
+    except SQLAlchemyError as e:
+        print(f"Error occurred: {e}")
+        raise HTTPException(status_code=500, detail="Failed to add entry")
+    
+# @app.post("/entries")
+# async def post_entry(entry: LedgerEntry):
+#     query = text("""
+#         INSERT INTO ledger (date, account, debit, credit, description)
+#         VALUES (:date, :account, :debit, :credit, :description)
+#     """)
+#     with engine.connect() as connection:
+#         result = connection.execute(query, entry.dict())
+#         if result.is_insert():
+#             return {"message": "Entry added successfully", "id": result.lastrowid}
+#         raise HTTPException(status_code=500, detail="Failed to add entry")
