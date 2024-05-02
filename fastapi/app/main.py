@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import json
 
 class LedgerEntry(BaseModel):
@@ -13,6 +13,12 @@ class LedgerEntry(BaseModel):
     debit: float = None
     credit: float = None
     description: str = None
+
+class UpdateEntryModel(BaseModel):
+    amount: float = Field(None, example=100.00)
+    description: str = Field(None, example="New description for the entry")
+
+
 
 # Create an instance of the FastAPI class
 app = FastAPI()
@@ -47,7 +53,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["*"],
 )
 
@@ -157,14 +163,29 @@ async def post_entry(entry: LedgerEntry):
         print(f"Error occurred: {e}")
         raise HTTPException(status_code=500, detail="Failed to add entry")
     
-# @app.post("/entries")
-# async def post_entry(entry: LedgerEntry):
-#     query = text("""
-#         INSERT INTO ledger (date, account, debit, credit, description)
-#         VALUES (:date, :account, :debit, :credit, :description)
-#     """)
-#     with engine.connect() as connection:
-#         result = connection.execute(query, entry.dict())
-#         if result.is_insert():
-#             return {"message": "Entry added successfully", "id": result.lastrowid}
-#         raise HTTPException(status_code=500, detail="Failed to add entry")
+@app.patch("/entries/{entry_id}")
+async def update_entry(entry_id: int, update_data: UpdateEntryModel):
+    print('update_entry')
+    update_parts = []
+    params = {}
+    if update_data.amount is not None:
+        update_parts.append("debit = :amount")
+        params["amount"] = update_data.amount
+    if update_data.description is not None:
+        update_parts.append("description = :description")
+        params["description"] = update_data.description
+
+    if not update_parts:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+
+    query = text(f"UPDATE ledger SET {', '.join(update_parts)} WHERE id = :entry_id")
+    params["entry_id"] = entry_id
+    print("Executing SQL:", query)
+    print("With parameters:", params)
+    with engine.connect() as connection:
+        result = connection.execute(query, params)
+        connection.commit() 
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Entry not found")
+
+    return {"message": "Entry updated successfully"}
