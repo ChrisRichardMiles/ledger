@@ -1,5 +1,8 @@
 import React from 'react';
 import GetEntries from '../components/GetEntries';
+import GetEntryById from '../components/GetEntryByID';
+import GetEntriesByAccount from '../components/GetEntriesByAccount';
+
 
 const IndexPage = () => {
   return (
@@ -35,28 +38,11 @@ const IndexPage = () => {
       </form>
 
       {/* Get All Entries Button */}
-     
-      <button>Get All Entries - old</button>
       <GetEntries />
       {/* Get Entry By Entry ID Form */}
-      <form>
-        <h2>Get Entry By Entry ID</h2>
-        <label>
-          Entry ID:
-          <input type="text" name="entryId" />
-        </label>
-        <button type="submit">Get Entry</button>
-      </form>
-
+      <GetEntryById />
       {/* Get Entries For Account Form */}
-      <form>
-        <h2>Get Entries For Account</h2>
-        <label>
-          Account Name:
-          <input type="text" name="accountName" />
-        </label>
-        <button type="submit">Get Entries</button>
-      </form>
+      <GetEntriesByAccount />
 
       {/* Update Entry By Entry ID Form */}
       <form>

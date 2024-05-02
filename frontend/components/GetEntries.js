@@ -44,7 +44,7 @@ const GetEntries = () => {
             <tr key={entry.id}>
               <td>{entry.id}</td>
               <td>{entry.date}</td>
-              <td>{entry.account_name}</td>
+              <td>{entry.account}</td>
               <td>{entry.debit}</td>
               <td>{entry.credit}</td>
               <td>{entry.description}</td>
