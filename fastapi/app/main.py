@@ -189,3 +189,15 @@ async def update_entry(entry_id: int, update_data: UpdateEntryModel):
             raise HTTPException(status_code=404, detail="Entry not found")
 
     return {"message": "Entry updated successfully"}
+
+@app.delete("/entries/{entry_id}")
+async def delete_entry(entry_id: int):
+    query = text("DELETE FROM ledger WHERE id = :entry_id")
+    with engine.connect() as connection:
+        result = connection.execute(query, {'entry_id': entry_id})
+        connection.commit()  # Ensure the transaction is committed.
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Entry not found")
+
+    return {"message": "Entry deleted successfully"}
+
