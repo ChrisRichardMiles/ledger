@@ -2,6 +2,8 @@ import React from 'react';
 import GetEntries from '../components/GetEntries';
 import GetEntryById from '../components/GetEntryByID';
 import GetEntriesByAccount from '../components/GetEntriesByAccount';
+import GetSummary from '../components/GetSummary';
+
 
 
 const IndexPage = () => {
@@ -43,7 +45,7 @@ const IndexPage = () => {
       <GetEntryById />
       {/* Get Entries For Account Form */}
       <GetEntriesByAccount />
-
+      
       {/* Update Entry By Entry ID Form */}
       <form>
         <h2>Update Entry By Entry ID</h2>
@@ -73,7 +75,7 @@ const IndexPage = () => {
       </form>
 
       {/* Get Ledger Summary Button */}
-      <button>Get Ledger Summary</button>
+      <GetSummary />
     </div>
   );
 };

@@ -82,20 +82,74 @@ async def get_entry_by_id(entry_id: int):
     # Return the JSON response containing the entry
     return serialized_entry
 
-@app.get("/entries/?account_name=")
-async def get_entries_by_account(account_name: str = None):
-    print('get_entries_by_account')
-    if not account_name:
-        raise HTTPException(status_code=400, detail="Account name is required")
-    
+# @app.get("/summary")
+# async def get_ledger_summary():
+#     print('get_ledger_summary')
+#     with engine.connect() as connection:
+#         # Query to calculate the total number of debits and their total amount
+#         debit_query = text("""
+#             SELECT COUNT(*) as total_debits, SUM(debit) as total_debit_amount
+#             FROM ledger
+#             WHERE debit > 0
+#         """)
+#         debit_result = connection.execute(debit_query).fetchone()
+
+#         # Query to calculate the total number of credits and their total amount
+#         credit_query = text("""
+#             SELECT COUNT(*) as total_credits, SUM(credit) as total_credit_amount
+#             FROM ledger
+#             WHERE credit > 0  
+#         """)
+#         credit_result = connection.execute(credit_query).fetchone()
+#         print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
+#         print(credit_result, print(type(credit_result)))
+
+#         # Determine if the ledger is balanced (total debits equal total credits)
+#         is_balanced = (debit_result['total_debits'] == credit_result['total_credits'])
+
+#         # Compile the results into a single dictionary to return as JSON
+#         summary = {
+#             "total_number_of_debits": debit_result['total_debits'],
+#             "total_debit_amount": abs(debit_result['total_debit_amount'] if debit_result['total_debit_amount'] else 0),
+#             "total_number_of_credits": credit_result['total_credits'],
+#             "total_credit_amount": credit_result['total_credit_amount'] if credit_result['total_credit_amount'] else 0,
+#             "is_balanced": is_balanced
+#         }
+
+#         return summary
+
+@app.get("/summary")
+async def get_ledger_summary():
+    print('get_ledger_summary')
     with engine.connect() as connection:
-        query = text("SELECT * FROM ledger WHERE account = :account_name")
-        result = connection.execute(query, {'account_name': account_name})
-        entries_data = result.fetchall()
-        print(account_name)
+        # Query to calculate the total number of debits and their total amount
+        debit_query = text("""
+            SELECT COUNT(*) as total_debits, SUM(debit) as total_debit_amount
+            FROM ledger
+            WHERE debit > 0
+        """)
+        debit_result = connection.execute(debit_query).fetchone()
 
-        if not entries_data:
-            raise HTTPException(status_code=404, detail="No entries found for this account")
+        # Query to calculate the total number of credits and their total amount
+        credit_query = text("""
+            SELECT COUNT(*) as total_credits, SUM(credit) as total_credit_amount
+            FROM ledger
+            WHERE credit > 0  
+        """)
+        credit_result = connection.execute(credit_query).fetchone()
+        print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
+        print(credit_result)
 
-        serialized_entries = [row._mapping for row in entries_data]
-        return serialized_entries
+        # Determine if the ledger is balanced (total debits equal total credits)
+        is_balanced = (debit_result[1] == credit_result[1])
+
+        # Compile the results into a single dictionary to return as JSON
+        summary = {
+            "total_number_of_debits": debit_result[0],
+            "total_debit_amount": abs(debit_result[1] if debit_result[1] else 0),  # Ensure no None values
+            "total_number_of_credits": credit_result[0],
+            "total_credit_amount": credit_result[1] if credit_result[1] else 0,
+            "is_balanced": is_balanced
+        }
+
+        return summary
