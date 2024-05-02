@@ -2,32 +2,25 @@ import React, { useState, useEffect } from 'react';
 
 const GetEntries = () => {
   const [entries, setEntries] = useState([]);
-  const [buttonClicked, setButtonClicked] = useState(false);
-
-  useEffect(() => {
-    if (buttonClicked) {
-      handleGetAllEntries();
-    }
-  }, [buttonClicked]);
 
   const handleGetAllEntries = async () => {
     try {
       const response = await fetch('http://localhost:8000/entries');
+      if (!response.ok) {
+        throw new Error('Failed to fetch entries');
+      }
       const data = await response.json();
       setEntries(data);
     } catch (error) {
       console.error('Error fetching entries:', error);
+      alert('Failed to fetch entries: ' + error.message);
     }
-  };
-
-  const handleClick = () => {
-    setButtonClicked(true);
   };
 
   return (
     <div>
       <h1>Get All Entries</h1>
-      <button onClick={handleClick}>Get All Entries</button>
+      <button onClick={handleGetAllEntries}>Get All Entries</button>
       <table>
         <thead>
           <tr>

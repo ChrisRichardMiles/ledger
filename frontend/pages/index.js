@@ -3,6 +3,8 @@ import GetEntries from '../components/GetEntries';
 import GetEntryById from '../components/GetEntryByID';
 import GetEntriesByAccount from '../components/GetEntriesByAccount';
 import GetSummary from '../components/GetSummary';
+import PostEntry from '../components/PostEntry';
+
 
 
 
@@ -11,6 +13,7 @@ const IndexPage = () => {
     <div>
       <h1>Welcome to the General Ledger System</h1>
       {/* Post Entry Form */}
+      <PostEntry />
       <form>
         <h2>Post Entry</h2>
         <label>

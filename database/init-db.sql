@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS ledger (
-    id INT,
+    id INTEGER PRIMARY KEY,
     date DATE NOT NULL,
     account VARCHAR(255) NOT NULL,
     debit FLOAT,
