@@ -11,22 +11,24 @@ const GetSummary = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchSummary = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/summary');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        setSummary(data);
-        setLoading(false);
-      } catch (error) {
-        setError('Failed to fetch summary: ' + error.message);
-        setLoading(false);
+  const fetchSummary = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await fetch('http://localhost:8000/summary');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
-    };
+      const data = await response.json();
+      setSummary(data);
+    } catch (error) {
+      setError('Failed to fetch summary: ' + error.message);
+    }
+    setLoading(false);
+  };
 
+  // Initialize the component with data
+  useEffect(() => {
     fetchSummary();
   }, []);
 
@@ -59,6 +61,7 @@ const GetSummary = () => {
           </tbody>
         </table>
       )}
+      <button onClick={fetchSummary} disabled={loading}>Refresh Summary</button>
     </div>
   );
 };
