@@ -150,10 +150,6 @@ async def post_entry(entry: LedgerEntry):
         print(f"Error occurred: {e}")
         raise HTTPException(status_code=500, detail="Failed to add entry")
     
-from fastapi import HTTPException
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
-
 @app.patch("/entries/{entry_id}")
 async def update_entry(entry_id: int, update_data: UpdateEntryModel):
     print('update_entry')
