@@ -137,6 +137,8 @@ async def get_ledger_summary():
     
 @app.post("/entries")
 async def post_entry(entry: LedgerEntry):
+    if entry.debit == 0: entry.debit = None
+    if entry.credit == 0: entry.credit = None
     query = text("""
         INSERT INTO ledger (date, account, debit, credit, description)
         VALUES (:date, :account, :debit, :credit, :description)
