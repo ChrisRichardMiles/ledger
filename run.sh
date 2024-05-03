@@ -7,5 +7,3 @@ bash run.sh # uvicorn main:app --host 0.0.0.0 --port 8000
 cd ../../frontend/
 bash run.sh # set up frontend container
 
-
-
