@@ -23,14 +23,6 @@ const IndexPage = () => {
       <UpdateEntry />
       {/* Delete Entry By Entry ID Form */}
       <DeleteEntry />
-      {/* <form>
-        <h2>Delete Entry By Entry ID</h2>
-        <label>
-          Entry ID:
-          <input type="text" name="entryId" />
-        </label>
-        <button type="submit">Delete Entry</button>
-      </form> */}
       {/* Get Ledger Summary Section */}
       <GetSummary />
     </div>

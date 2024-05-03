@@ -1,6 +1,4 @@
 from fastapi import FastAPI, HTTPException, Request, Query
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -22,19 +20,6 @@ class UpdateEntryModel(BaseModel):
 
 # Create an instance of the FastAPI class
 app = FastAPI()
-
-# Added for Debugging but it didn't show anything
-# @app.exception_handler(RequestValidationError)
-# async def validation_exception_handler(request: Request, exc: RequestValidationError):
-#     errors = exc.errors()
-#     body = await request.json()  # Be cautious with this line; if request body is large, this could be inefficient
-#     return JSONResponse(
-#         status_code=422,
-#         content={
-#             "detail": errors,
-#             "body": body
-#         }
-#     )
 
 # Middleware to log the request body
 class RequestBodyLoggerMiddleware(BaseHTTPMiddleware):
@@ -62,7 +47,6 @@ DATABASE_URL = 'sqlite:///ledger.db'
 
 # Create the database engine
 engine = create_engine(DATABASE_URL)
-
 
 # Define the route to handle the root endpoint
 @app.get("/")
