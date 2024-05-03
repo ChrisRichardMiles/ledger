@@ -1,9 +1,14 @@
+import json
+
 from fastapi import FastAPI, HTTPException, Request, Query
-from sqlalchemy import create_engine, text
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import create_engine, text, select
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel, Field
-import json
+
+
 
 class LedgerEntry(BaseModel):
     date: str
@@ -15,8 +20,6 @@ class LedgerEntry(BaseModel):
 class UpdateEntryModel(BaseModel):
     amount: float = Field(None, example=100.00)
     description: str = Field(None, example="New description for the entry")
-
-
 
 # Create an instance of the FastAPI class
 app = FastAPI()
@@ -147,32 +150,56 @@ async def post_entry(entry: LedgerEntry):
         print(f"Error occurred: {e}")
         raise HTTPException(status_code=500, detail="Failed to add entry")
     
+from fastapi import HTTPException
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+
 @app.patch("/entries/{entry_id}")
 async def update_entry(entry_id: int, update_data: UpdateEntryModel):
     print('update_entry')
     update_parts = []
-    params = {}
-    if update_data.amount is not None:
-        update_parts.append("debit = :amount")
-        params["amount"] = update_data.amount
-    if update_data.description is not None:
-        update_parts.append("description = :description")
-        params["description"] = update_data.description
+    params = {"entry_id": entry_id}
 
-    if not update_parts:
-        raise HTTPException(status_code=400, detail="No valid fields to update")
+    # Using session for database operations
+    with Session(engine) as session:
+        # Fetch current debit and credit values using modern SQLAlchemy syntax
+        stmt = select(text("debit, credit")).select_from(text("ledger")).where(text("id = :entry_id"))
+        result = session.execute(stmt, {"entry_id": entry_id}).fetchone()
+        print('#' * 50)
+        print(result)
+        result = {'debit': result[0] or 0, 'credit': result[1] or 0} ########### TEMPORARY FIX
 
-    query = text(f"UPDATE ledger SET {', '.join(update_parts)} WHERE id = :entry_id")
-    params["entry_id"] = entry_id
-    print("Executing SQL:", query)
-    print("With parameters:", params)
-    with engine.connect() as connection:
-        result = connection.execute(query, params)
-        connection.commit() 
-        if result.rowcount == 0:
+        if not result:
             raise HTTPException(status_code=404, detail="Entry not found")
 
-    return {"message": "Entry updated successfully"}
+        # Check which field (debit or credit) to update based on non-zero current values
+        if result['debit'] != 0 and update_data.amount is not None:
+            update_parts.append("debit = :amount")
+            params["amount"] = update_data.amount
+        elif result['credit'] != 0 and update_data.amount is not None:
+            update_parts.append("credit = :amount")
+            params["amount"] = update_data.amount
+
+        if update_data.description is not None:
+            update_parts.append("description = :description")
+            params["description"] = update_data.description
+
+        if not update_parts:
+            raise HTTPException(status_code=400, detail="No valid fields to update")
+
+        update_query = text(f"UPDATE ledger SET {', '.join(update_parts)} WHERE id = :entry_id")
+
+        # Attempt to update and commit
+        try:
+            update_result = session.execute(update_query, params)
+            session.commit()  # Ensure changes are committed
+            if update_result.rowcount == 0:
+                raise HTTPException(status_code=404, detail="No entry was updated, check your data")
+            return {"message": "Entry updated successfully"}
+        except SQLAlchemyError as e:
+            session.rollback()  # Roll back in case of an error
+            print(f"SQLAlchemy Error: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/entries/{entry_id}")
 async def delete_entry(entry_id: int):
